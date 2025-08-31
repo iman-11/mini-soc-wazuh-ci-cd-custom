@@ -1,33 +1,33 @@
 # Mini-SOC Wazuh CI/CD
 
-Ce projet implémente un **Mini-SOC (Security Operations Center)** basé sur **Wazuh**, avec intégration d’une pipeline **CI/CD** et déploiement automatisé sur **Docker Swarm**.  
+This project delivers a **Mini-SOC (Security Operations Center)** built on the **Wazuh stack**, integrated with a complete **CI/CD** pipeline and deployed on a **Docker Swarm** cluster.
 
-Il permet de tester et de mettre en œuvre un environnement SOC moderne, sécurisé et reproductible.
-
----
-
-## 🎯 Objectifs du projet
-- Déployer une stack **Wazuh** (Indexer, Manager, Dashboard).  
-- Automatiser l’installation et la configuration via **Ansible**.  
-- Mettre en place une pipeline **CI/CD GitHub Actions** comprenant :  
-  - Construction d’images Docker.  
-  - Scan de sécurité avec **Trivy**.  
-  - Tests automatisés avec **Selenium** et **API probe**.  
-  - Déploiement sur Docker Swarm après validation.  
-- Sécuriser les accès avec **Traefik** (reverse proxy, certificats TLS).  
+The goal is to provide a secure, automated, and reproducible SOC environment following modern DevSecOps practices.
 
 ---
 
-## Architecture 
+## 🎯 Project Goals
+- Deploy a full **Wazuh stack** (Indexer, Manager, Dashboard).  
+- Automate provisioning and deployment with **Ansible**.  
+- Implement a **GitHub Actions CI/CD pipeline** with:  
+  - Docker image builds.  
+  - Vulnerability scanning using **Trivy**.  
+  - Automated tests with **Selenium** (UI) and **API probe**.  
+  - Conditional deployment to Docker Swarm.  
+- Secure access with **Traefik** (reverse proxy + TLS certificates).    
 
-**Pipeline**
-1. **Build** container images (optional override of upstream)
-2. **Scan** with **Trivy** — fail on HIGH/CRITICAL
-3. **Test** with Selenium (UI) and API health probe
-4. **Deploy** via **Ansible** to **Docker Swarm** (only on `main` after checks pass)
-5. **TLS** via Traefik (Let’s Encrypt or self-signed for labs)
+---
 
-**Runtime**
+## Architecture Overview
+
+### 🔄 CI/CD Pipeline
+1. **Build**: build Docker images (optional override).  
+2. **Scan**: run **Trivy** scans (fail on HIGH/CRITICAL vulnerabilities).  
+3. **Test**: execute Selenium UI tests and API health checks.  
+4. **Deploy**: run **Ansible playbooks** to deploy to Docker Swarm (on `main` only after checks pass).  
+5. **TLS**: managed by Traefik (Let’s Encrypt or self-signed for testing).  
+
+### ⚙️ Runtime Environment
 - **Docker Swarm** (manager + workers)
 - **Wazuh**: indexer, manager, dashboard
 - **Traefik**: reverse-proxy + ACME
@@ -37,9 +37,13 @@ Il permet de tester et de mettre en œuvre un environnement SOC moderne, sécuri
 
 ## Quickstart (Local Demo)
 
-> Requires: Docker (20+), Docker Compose v2, Python 3.10+, Chrome + Chromedriver (or use containers), Make.
+### Requirements  
+- Docker v20+ and Docker Compose v2  
+- Python 3.10+  
+- Google Chrome + Chromedriver (or containerized version)  
+- Make (optional on Windows) 
 
-```bash
+### Steps
 # 1) Clone
 git clone 
 cd mini-soc-wazuh-swarm
@@ -61,7 +65,7 @@ make down-test
 
 ---
 
-## CI/CD (GitHub Actions)
+## CI/CD with GitHub Actions
 
 Pipeline stages:
 - **lint**: yamllint + ansible-lint (bonus quality gates)
@@ -118,7 +122,7 @@ ansible-playbook -i ansible/inventories/prod ansible/playbooks/teardown.yml
 
 ---
 
-## Secrets & TLS
+## 🔒 Secrets & TLS Management
 
 - Use:
   - GitHub Secrets → injected to jobs
