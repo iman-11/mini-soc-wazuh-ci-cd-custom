@@ -1,0 +1,13 @@
+- name: Ensure Docker is installed
+  package:
+    name: "{{ 'docker.io' if ansible_facts['os_family'] != 'Darwin' else 'docker' }}"
+    state: present
+
+- name: Ensure Docker Swarm is initialized
+  docker_swarm:
+    state: present
+  register: swarm_status
+
+- name: Debug swarm state
+  debug:
+    var: swarm_status

@@ -1,0 +1,20 @@
+- name: Copy stack files
+  copy:
+    src: "{{ item.src }}"
+    dest: "/opt/wazuh/{{ item.dest }}"
+    mode: '0644'
+  loop:
+    - { src: "../../../../stack/wazuh-stack.yml", dest: "wazuh-stack.yml" }
+    - { src: "../../../../security/traefik/traefik.yml", dest: "traefik.yml" }
+    - { src: "../../../../security/traefik/dynamic.yml", dest: "dynamic.yml" }
+
+- name: Deploy/Update stack
+  docker_stack:
+    state: present
+    name: wazuh
+    compose:
+      - /opt/wazuh/wazuh-stack.yml
+  environment:
+    WAZUH_DOMAIN: "{{ wazuh_domain }}"
+    TLS_MODE: "{{ tls_mode }}"
+    ACME_EMAIL: "{{ acme_email }}"

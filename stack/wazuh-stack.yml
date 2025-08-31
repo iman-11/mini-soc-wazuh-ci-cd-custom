@@ -1,0 +1,89 @@
+# Base stack usable by both Swarm and local compose (v2)
+# Compose v2 will accept deploy keys for local testing, but ignores Swarm-only semantics.
+
+services:
+  traefik:
+    image: traefik:v3.1
+    command:
+      - "--api.dashboard=true"
+      - "--providers.file.filename=/etc/traefik/traefik.yml"
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--entrypoints.websecure.address=:443"
+      - "--serversTransport.insecureSkipVerify=true"
+    ports:
+      - "443:443"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./security/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./security/traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
+      - traefik_letsencrypt:/letsencrypt
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+    networks:
+      - wazuh_front
+
+  wazuh-indexer:
+    image: wazuh/wazuh-indexer:4.8.2
+#    platform: linux/amd64
+    environment:
+      - "cluster.name=wazuh-cluster"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    volumes:
+      - wazuh_indexer_data:/var/lib/wazuh-indexer
+    networks:
+      - wazuh_back
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  wazuh-manager:
+    image: wazuh/wazuh-manager:4.8.2
+#    platform: linux/amd64
+    environment:
+      - INDEXER_URL=https://wazuh-indexer:9200
+    volumes:
+      - wazuh_manager_data:/var/ossec/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:55000"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - wazuh_back
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  wazuh-dashboard:
+    image: wazuh/wazuh-dashboard:4.8.2
+#    platform: linux/amd64
+    depends_on:
+      - wazuh-manager
+      - wazuh-indexer
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.rule=HostRegexp(`{host:.+}`)"
+      - "traefik.http.services.dashboard.loadbalancer.server.port=5601"
+    networks:
+      - wazuh_front
+      - wazuh_back
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+
+volumes:
+  wazuh_manager_data:
+  wazuh_indexer_data:
+  traefik_letsencrypt:
+
+networks:
+  wazuh_front:
+  wazuh_back:

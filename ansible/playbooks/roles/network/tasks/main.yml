@@ -1,0 +1,9 @@
+- name: Create overlay networks (idempotent)
+  docker_network:
+    name: "{{ item.name }}"
+    driver: overlay
+    attachable: true
+    state: present
+  loop:
+    - { name: "wazuh_front" }
+    - { name: "wazuh_back" }

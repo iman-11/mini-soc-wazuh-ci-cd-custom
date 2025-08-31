@@ -1,0 +1,8 @@
+- name: Teardown Wazuh stack
+  hosts: managers
+  become: true
+  tasks:
+    - name: Remove stack
+      docker_stack:
+        state: absent
+        name: wazuh

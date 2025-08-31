@@ -1,0 +1,12 @@
+log:
+  level: INFO
+api:
+  dashboard: true
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+
+entryPoints:
+  websecure:
+    address: ":443"

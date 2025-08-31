@@ -1,0 +1,10 @@
+- name: Deploy Wazuh stack to Docker Swarm
+  hosts: managers
+  become: true
+  vars_files:
+    - ../inventories/prod/group_vars/prod.yml
+  roles:
+    - role: swarm
+    - role: network
+    - role: secrets
+    - role: stack

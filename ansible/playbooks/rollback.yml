@@ -1,0 +1,10 @@
+- name: Rollback Wazuh stack on failure
+  hosts: managers
+  become: true
+  tasks:
+    - name: Attempt rollback using docker service update --rollback
+      shell: |
+        set -e
+        for svc in $(docker service ls --format '{{.Name}}' | grep '^wazuh_'); do
+          docker service update --rollback "$svc" || true
+        done

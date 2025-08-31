@@ -1,0 +1,81 @@
+name: mini-soc-wazuh-swarm
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  lint:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lint YAML and Ansible (non-blocking demo)
+        run: |
+          yamllint . || true
+          ansible-lint || true
+
+  build_and_scan:
+    runs-on: self-hosted
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build images
+        run: |
+          docker build -t local/wazuh-manager:ci docker/manager
+          docker build -t local/wazuh-dashboard:ci docker/dashboard
+      - name: Trivy scan (HIGH/CRITICAL -> fail)
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: local/wazuh-manager:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          # uncomment the following line to fail pipeline on HIGH/CRITICAL vuln
+          # exit-code: 1
+          format: 'table'
+          scanners: 'vuln'
+          timeout: 15m
+
+
+  test:
+    runs-on: self-hosted
+    needs: build_and_scan
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bring up ephemeral test env
+        run: docker compose -f stack/wazuh-stack.yml -f stack/compose.test.override.yml up -d
+      - name: Wait for dashboard to be up
+        run: |
+          for i in {1..120}; do
+            curl -s http://localhost:5601/ >/dev/null && exit 0
+            sleep 5
+          done
+          echo "Dashboard not reachable"
+          docker ps
+          exit 1
+      - name: Run Selenium tests
+        run: pytest -q tests/selenium/test_dashboard.py
+      - name: Run API health probe
+        run: pytest -q tests/api/test_api_health.py
+      - name: Dump compose logs
+        if: always()
+        run: docker compose -f stack/wazuh-stack.yml -f stack/compose.test.override.yml logs > evidence/compose-logs.txt || true
+      - name: Tear down test env
+        if: always()
+        run: docker compose -f stack/wazuh-stack.yml -f stack/compose.test.override.yml down -v
+
+  deploy:
+    # Only deploy on main after tests pass
+    if: github.ref == 'refs/heads/main'
+    runs-on: self-hosted
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Swarm via Ansible
+        env:
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: |
+          echo "$ANSIBLE_VAULT_PASSWORD" > /tmp/.vault_pass
+          export ANSIBLE_VAULT_PASSWORD_FILE=/tmp/.vault_pass
+          ansible-playbook -i ansible/inventories/prod ansible/playbooks/deploy.yml

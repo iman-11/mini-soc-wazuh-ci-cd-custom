@@ -1,0 +1,12 @@
+services:
+  traefik:
+    environment:
+      - "LE_EMAIL=${ACME_EMAIL:-admin@ecorp.com}"
+      - "TLS_MODE=${TLS_MODE:-selfsigned}"
+    extra_hosts:
+      - "localhost:127.0.0.1"
+  wazuh-dashboard:
+    labels:
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.tls.certresolver=${TLS_MODE:-selfsigned}"
+      - "traefik.http.routers.dashboard.rule=Host(`localhost`)"

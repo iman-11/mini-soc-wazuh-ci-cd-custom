@@ -1,0 +1,26 @@
+severity:
+  - CRITICAL
+  - HIGH
+
+# Don’t block builds on unfixed CVEs (common in base images)
+ignore-unfixed: true
+
+# Uncomment the following line to fail on HIGH/CRITICAL vulneerabilities
+# exit-code: 1
+
+format: table
+
+vuln-type:
+  - os
+  - library
+
+# Enable caching to speed up CI scans
+cache-dir: .trivycache
+timeout: 15m
+
+# Only run vulnerability scanner (skip secret scanning to reduce noise & time)
+scanners:
+  - vuln
+
+# Generate an additional JSON artifact
+output: trivy-report.json

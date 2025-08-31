@@ -1,0 +1,7 @@
+wazuh_domain: "wazuh.local"    # set to your domain or IP
+tls_mode: "selfsigned"         # "letsencrypt" or "selfsigned"
+acme_email: "admin@ecorp.com"  # used for let's encrypt
+wazuh_admin_user: "admin"
+# Password comes from Swarm secret: wazuh_admin_password
+docker_swarm_version: "latest"
+docker_compose_version: "1.29.2"
