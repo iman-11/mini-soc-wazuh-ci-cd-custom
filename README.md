@@ -1,13 +1,24 @@
-# Mini SOC — Wazuh
+# Mini-SOC Wazuh CI/CD
 
-A production-grade, reproducible reference implementation for **Wazuh as a Mini SOC**.
-It deploys the **Wazuh stack** (Indexer, Manager, Dashboard) onto **Docker Swarm**, fronted by **Traefik** with HTTPS, and wired into a full **CI/CD** pipeline with **Trivy** scanning and **Selenium/API tests**.
+Ce projet implémente un **Mini-SOC (Security Operations Center)** basé sur **Wazuh**, avec intégration d’une pipeline **CI/CD** et déploiement automatisé sur **Docker Swarm**.  
 
-> Works on self-hosted GitHub runners and locally. Secrets are handled via **Swarm Secrets** and **Ansible Vault**.
+Il permet de tester et de mettre en œuvre un environnement SOC moderne, sécurisé et reproductible.
 
 ---
 
-## Architecture Overview
+## 🎯 Objectifs du projet
+- Déployer une stack **Wazuh** (Indexer, Manager, Dashboard).  
+- Automatiser l’installation et la configuration via **Ansible**.  
+- Mettre en place une pipeline **CI/CD GitHub Actions** comprenant :  
+  - Construction d’images Docker.  
+  - Scan de sécurité avec **Trivy**.  
+  - Tests automatisés avec **Selenium** et **API probe**.  
+  - Déploiement sur Docker Swarm après validation.  
+- Sécuriser les accès avec **Traefik** (reverse proxy, certificats TLS).  
+
+---
+
+## Architecture 
 
 **Pipeline**
 1. **Build** container images (optional override of upstream)
